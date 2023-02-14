@@ -7,7 +7,9 @@ import json
 with open('credentials.json', 'r', encoding='utf-8') as f:
     CREDENTIALS = json.loads(f.read())
 TOKEN = CREDENTIALS["token"]
-bot = commands.Bot(command_prefix="!")
+intents = discord.Intents.default()
+intents.messages  = True
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
