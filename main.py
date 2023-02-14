@@ -17,7 +17,7 @@ async def on_ready():
     print(f"Logged in as {bot.user.name}")
 async def main():
     async with bot:
-        await load_extensions()
+        await bot.load_extensions("cogs.TranslateCog")
         await bot.start(TOKEN)
 
 asyncio.run(main())
