@@ -102,5 +102,5 @@ class TranslateCog(commands.Cog):
         else:
             await ctx.send("Sorry, you have no permission to use this command")
 
-    async def setup(bot):
-        await bot.add_cog(MyCog(bot))
+async def setup(bot):
+    await bot.add_cog(MyCog(bot))
