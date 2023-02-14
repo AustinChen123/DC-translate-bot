@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from cogs.TranslateCog import TranslateCog
 import json
 import asyncio
