@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from cogs.TranslateCog import TranslateCog
 import json
+import asyncio
 
 
 with open('credentials.json', 'r', encoding='utf-8') as f:
@@ -18,5 +19,5 @@ async def main():
     async with bot:
         await load_extensions()
         await bot.start(TOKEN)
-        
+
 asyncio.run(main())
