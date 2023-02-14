@@ -15,7 +15,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"Logged in as {bot.user.name}")
 
-bot.add_cog(TranslateCog(bot))
+await bot.load_extension("TranslateCog")
 
 
 bot.run(TOKEN)
