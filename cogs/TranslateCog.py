@@ -29,7 +29,7 @@ class TranslateCog(commands.Cog):
         text = message.content
         author = message.author.name
         user = await self.bot.fetch_user(message.author.id)
-        avatar = user.display_avatar.with_size(size=32).url
+        avatar = user.display_avatar.with_size(32).url
         if message.author == self.bot.user:
             return
         if self.config.get(str(guild_id)):
