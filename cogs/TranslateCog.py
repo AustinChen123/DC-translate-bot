@@ -51,8 +51,10 @@ class TranslateCog(commands.Cog):
                     'text': text,
                     'target_lang': 'en'
                 }
+                print(text)
                 response = requests.post('https://api-free.deepl.com/v2/translate', headers=headers, data=data)
-
+                print(response.text)
+                print(response.status_code)
                 
                 result = json.loads(response.text)
                 if response.status_code  == 4002:
