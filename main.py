@@ -10,24 +10,18 @@ class MyBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
         intents.messages  = True
+        intents.message_content = True
         super().__init__(command_prefix='$', intents=intents)
         self.initial_extensions = [
             'cogs.TranslateCog'
         ]
 
     async def setup_hook(self):
-        self.background_task.start()
-        self.session = aiohttp.ClientSession()
         for ext in self.initial_extensions:
             await self.load_extension(ext)
 
     async def close(self):
         await super().close()
-        await self.session.close()
-
-    @tasks.loop(minutes=10)
-    async def background_task(self):
-        print('Running background task...')
 
     async def on_ready(self):
         print('Ready!')
