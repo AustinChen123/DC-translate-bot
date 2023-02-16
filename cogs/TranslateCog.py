@@ -23,7 +23,6 @@ class TranslateCog(commands.Cog):
             self.config = json.loads(f.read())
      
     @commands.Cog.listener()
-    @Client.event
     async def on_message(self, message):
         print(message)
         print(type(message))
