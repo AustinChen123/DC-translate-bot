@@ -11,7 +11,7 @@ class MyBot(commands.Bot):
         intents = discord.Intents.default()
         intents.messages  = True
         intents.message_content = True
-        super().__init__(command_prefix='$', intents=intents)
+        super().__init__(command_prefix='!', intents=intents)
         self.initial_extensions = [
             'cogs.TranslateCog'
         ]

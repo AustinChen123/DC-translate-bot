@@ -30,6 +30,8 @@ class TranslateCog(commands.Cog):
         author = message.author.name
         user = await self.bot.fetch_user(message.author.id)
         avatar = user.display_avatar.with_size(32).url
+        if text[:4] == "!set":
+            return
         if message.author == self.bot.user:
             return
         if self.config.get(str(guild_id)):
@@ -54,7 +56,6 @@ class TranslateCog(commands.Cog):
                 print(text)
                 response = requests.post('https://api-free.deepl.com/v2/translate', headers=headers, data=data)
                 print(response.text)
-                print(response.status_code)
                 
                 result = json.loads(response.text)
                 if response.status_code  == 4002:
@@ -78,7 +79,7 @@ class TranslateCog(commands.Cog):
 
     @commands.command()
     async def set_read_channel(self, ctx, read_channel: discord.TextChannel):
-        if ctx.author.permissions_in(ctx.channel).administrator:
+        if ctx.channel.permissions_for(ctx.author).administrator:
             if self.config.get(str(ctx.guild.id)):
                 self.config[str(ctx.guild.id)]["read_channel_id"] = read_channel.id
             else:
@@ -92,7 +93,7 @@ class TranslateCog(commands.Cog):
         
     @commands.command()
     async def set_reply_channel(self, ctx, reply_channel: discord.TextChannel):
-        if ctx.author.permissions_in(ctx.channel).administrator:
+        if ctx.channel.permissions_for(ctx.author).administrator:
             if self.config.get(str(ctx.guild.id)):
                 self.config[str(ctx.guild.id)]["reply_channel_id"] = reply_channel.id
             else:
