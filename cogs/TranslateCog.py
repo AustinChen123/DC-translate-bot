@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import Client
 import requests
 import json
 import googletrans
@@ -22,7 +23,11 @@ class TranslateCog(commands.Cog):
             self.config = json.loads(f.read())
      
     @commands.Cog.listener()
+    @Client.event
     async def on_message(self, message):
+        print(message)
+        print(type(message))
+        
         global PARAMS
         guild_id = message.channel.guild.id
         message_channel = message.channel.id
@@ -53,9 +58,7 @@ class TranslateCog(commands.Cog):
                     'text': text,
                     'target_lang': 'en'
                 }
-                print(text)
                 response = requests.post('https://api-free.deepl.com/v2/translate', headers=headers, data=data)
-                print(response.text)
                 
                 result = json.loads(response.text)
                 if response.status_code  == 4002:

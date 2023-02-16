@@ -9,9 +9,9 @@ import aiohttp
 class MyBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
-        intents.messages  = True
+        # intents.messages  = True
         intents.message_content = True
-        super().__init__(command_prefix='!', intents=intents)
+        super().__init__(intents=intents)
         self.initial_extensions = [
             'cogs.TranslateCog'
         ]
