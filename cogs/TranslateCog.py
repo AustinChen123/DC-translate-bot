@@ -24,85 +24,83 @@ class TranslateCog(commands.Cog):
      
     @commands.Cog.listener()
     async def on_message(self, message):
-        print(message)
-        print(type(message))
-        
-        global PARAMS
+
+        Name = message.author.display_name
+        Avatar = message.author.display_avatar.url
         guild_id = message.channel.guild.id
         message_channel = message.channel.id
         text = message.content
-        author = message.author.name
-        user = await self.bot.fetch_user(message.author.id)
-        avatar = user.display_avatar.with_size(32).url
-        if text[:4] == "!set":
-            return
-        if message.author == self.bot.user:
-            return
+        attachments = message.attachments
+            
         if self.config.get(str(guild_id)):
             if self.config[str(guild_id)].get("read_channel_id"):
                 read_channel_id = self.config[str(guild_id)]["read_channel_id"]
             if self.config[str(guild_id)].get("reply_channel_id"):
                 reply_channel_id = self.config[str(guild_id)]["reply_channel_id"]
-            else:
-                return
-            if message_channel != read_channel_id:
-                return
-            else:
-                target_channel = self.bot.get_channel(reply_channel_id)
-                headers = {
-                    'Authorization': f'DeepL-Auth-Key {DEEPL_API_KEY}',
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-                data = {
-                    'text': text,
-                    'target_lang': 'en'
-                }
-                response = requests.post('https://api-free.deepl.com/v2/translate', headers=headers, data=data)
-                
-                result = json.loads(response.text)
-                if response.status_code  == 4002:
-                    await ctx.send("Sorry, you have exceed the deepl daily translate limit.")
-                    return
-                translated_text = result['translations'][0]['text']
-                try:
-                    if author != PARAMS["last_speaker"]:
-                        # file = await author.display_avatar.to_file()
-                        # await message.channel.send(file = file)
-                        await target_channel.send(avatar)
-                        await target_channel.send(f"{author} said:")
-                except:
-                    pass
-                await target_channel.send("︱" + translated_text.replace("\n","\n︱"))
-            PARAMS["last_speaker"] = message.author.name
+        if message.author == self.bot.user:
+            return
 
-        else:
-            await ctx.send("You have not set the read/reply channel, please use`!set_channel`command first.")
+        if message_channel != read_channel_id:
             return 
-
-    @commands.command()
-    async def set_read_channel(self, ctx, read_channel: discord.TextChannel):
-        if ctx.channel.permissions_for(ctx.author).administrator:
-            if self.config.get(str(ctx.guild.id)):
-                self.config[str(ctx.guild.id)]["read_channel_id"] = read_channel.id
-            else:
-                self.config[str(ctx.guild.id)] = {}
-                self.config[str(ctx.guild.id)]["read_channel_id"] = read_channel.id
-            with open(os.path.abspath('config.json'), "w") as outfile:
-                json.dump(self.config, outfile) 
-            await ctx.send(f"Start reading channel <#{read_channel.id}>")
         else:
-            await ctx.send("Sorry, you have no permission to use this command")
+            target_channel = self.bot.get_channel(reply_channel_id)
+            headers = {
+                'Authorization': f'DeepL-Auth-Key {DEEPL_API_KEY}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+            data = {
+                'text': text,
+                'target_lang': 'en'
+            }
+            response = requests.post('https://api-free.deepl.com/v2/translate', headers=headers, data=data)
+            
+            result = json.loads(response.text)
+            if response.status_code  == 4002:
+                await target_channel.send("Sorry, you have exceed the deepl daily translate limit.")
+                return
+            translated_text = result['translations'][0]['text']
+
+ 
+ 
+        webhook = await target_channel.create_webhook(name=Name)
+        if text != "":
+            await webhook.send(
+                str(translated_text), username=Name, avatar_url=Avatar)
+
+        if len(attachments) !=0:
+            for attachment in attachments:
+                await webhook.send(
+                    attachment.url, username=Name, avatar_url=Avatar)
+    
+        webhooks = await target_channel.webhooks()
+        for webhook in webhooks:
+            await webhook.delete()
+
+
+    # @commands.command()
+    # async def set_read_channel(self, ctx, read_channel: discord.TextChannel):
+    #     if ctx.channel.permissions_for(ctx.author).administrator:
+    #         if config.get(str(channel.guild.id)):
+    #             config[str(channel.guild.id)]["read_channel_id"] = read_channel.id
+    #         else:
+    #             config[str(channel.guild.id)] = {}
+    #             config[str(channel.guild.id)]["read_channel_id"] = read_channel.id
+    #         with open(os.path.abspath('config.json'), "w") as outfile:
+    #             json.dump(config, outfile) 
+    #         await ctx.send(f"Start reading channel <#{read_channel.id}>")
+    #     else:
+    #         await ctx.send("Sorry, you have no permission to use this command")
         
     @commands.command()
     async def set_reply_channel(self, ctx, reply_channel: discord.TextChannel):
         if ctx.channel.permissions_for(ctx.author).administrator:
-            if self.config.get(str(ctx.guild.id)):
-                self.config[str(ctx.guild.id)]["reply_channel_id"] = reply_channel.id
+            if config.get(str(channel.guild.id)):
+                config[str(channel.guild.id)]["reply_channel_id"] = reply_channel.id
             else:
-                self.config[str(ctx.guild.id)] = {}
-                self.config[str(ctx.guild.id)]["reply_channel_id"] = reply_channel.id
+                config[str(channel.guild.id)] = {}
+                config[str(channel.guild.id)]["reply_channel_id"] = reply_channel.id
             with open(os.path.abspath('config.json'), "w") as outfile:
-                json.dump(self.config, outfile) 
+                json.dump(config, outfile) 
             await ctx.send(f"Replying to channel <#{reply_channel.id}>")
         else:
             await ctx.send("Sorry, you have no permission to use this command")
