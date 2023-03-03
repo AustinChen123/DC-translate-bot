@@ -16,6 +16,20 @@ last_speaker = ""
 PARAMS = {
     "last_speaker":last_speaker
 }
+def get_translation(text, target_lang="en"):
+    headers = {
+        'Authorization': f'DeepL-Auth-Key {DEEPL_API_KEY}',
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    data = {
+        'text': text,
+        'target_lang': target_lang
+    }
+    response = requests.post('https://api-free.deepl.com/v2/translate', headers=headers, data=data)
+    if response.status_code  == 4002:
+        return 4002
+    result = json.loads(response.text)
+    return result['translations'][0]['text']
 class TranslateCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -24,6 +38,8 @@ class TranslateCog(commands.Cog):
      
     @commands.Cog.listener()
     async def on_message(self, message):
+        if message.author.bot:
+            return
 
         Name = message.author.display_name
         Avatar = message.author.display_avatar.url
@@ -33,48 +49,99 @@ class TranslateCog(commands.Cog):
         attachments = message.attachments
             
         if self.config.get(str(guild_id)):
-            if self.config[str(guild_id)].get("read_channel_id"):
-                read_channel_id = self.config[str(guild_id)]["read_channel_id"]
-            if self.config[str(guild_id)].get("reply_channel_id"):
-                reply_channel_id = self.config[str(guild_id)]["reply_channel_id"]
-        if message.author == self.bot.user:
-            return
+            All_set = 0
+            if self.config[str(guild_id)].get("read_channel_id_JP"):
+                read_channel_id_JP = self.config[str(guild_id)]["read_channel_id_JP"]
+                All_set += 1
+            if self.config[str(guild_id)].get("read_channel_id_other"):
+                read_channel_id_other = self.config[str(guild_id)]["read_channel_id_other"]
+                All_set += 1
+            if self.config[str(guild_id)].get("reply_channel_id_EN"):
+                reply_channel_id_EN = self.config[str(guild_id)]["reply_channel_id_EN"]
+                All_set += 1
+            if self.config[str(guild_id)].get("reply_channel_id_CN"):
+                reply_channel_id_EN = self.config[str(guild_id)]["reply_channel_id_CN"]
+                All_set += 1
 
-        if message_channel != read_channel_id:
-            return 
-        else:
-            target_channel = self.bot.get_channel(reply_channel_id)
-            headers = {
-                'Authorization': f'DeepL-Auth-Key {DEEPL_API_KEY}',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-            data = {
-                'text': text,
-                'target_lang': 'en'
-            }
-            response = requests.post('https://api-free.deepl.com/v2/translate', headers=headers, data=data)
-            
-            result = json.loads(response.text)
-            if response.status_code  == 4002:
-                await target_channel.send("Sorry, you have exceed the deepl daily translate limit.")
+            if All_set != 4:
                 return
-            translated_text = result['translations'][0]['text']
 
- 
- 
-        webhook = await target_channel.create_webhook(name=Name)
-        if text != "":
-            await webhook.send(
-                str(translated_text), username=Name, avatar_url=Avatar)
 
-        if len(attachments) !=0:
-            for attachment in attachments:
+        if message_channel in [read_channel_id_JP]:
+            target_channel_EN = self.bot.get_channel(reply_channel_id_EN)
+            target_channel_CN = self.bot.get_channel(reply_channel_id_CN)
+            translated_text_EN = get_translation(text, target_lang="en")
+            # Note the target lang is zh not cn
+            translated_text_CN = get_translation(text, target_lang="zh")
+            
+            # send JP -> EN message to English channel
+            webhook = await target_channel_EN.create_webhook(name=Name)
+            if text != "":
                 await webhook.send(
-                    attachment.url, username=Name, avatar_url=Avatar)
-    
-        webhooks = await target_channel.webhooks()
-        for webhook in webhooks:
-            await webhook.delete()
+                    str(translated_text_EN), username=Name, avatar_url=Avatar)
+
+            if len(attachments) !=0:
+                for attachment in attachments:
+                    await webhook.send(
+                        attachment.url, username=Name, avatar_url=Avatar)
+            # send JP -> CN message to English channel
+            webhook = await target_channel_CN.create_webhook(name=Name)
+            if text != "":
+                await webhook.send(
+                    str(translated_text_CN), username=Name, avatar_url=Avatar)
+
+            if len(attachments) !=0:
+                for attachment in attachments:
+                    await webhook.send(
+                        attachment.url, username=Name, avatar_url=Avatar)
+            webhooks = await target_channel_EN.webhooks()
+            for webhook in webhooks:
+                await webhook.delete()
+            webhooks = await target_channel_CN.webhooks()
+            for webhook in webhooks:
+                await webhook.delete()
+            
+        elif message_channel in read_channel_id_other:
+            target_channel_JP = self.bot.get_channel(reply_channel_id_EN)
+            translated_text = get_translation(text, target_lang="ja")
+
+            webhook = await target_channel_JP.create_webhook(name=Name)
+            if text != "":
+                await webhook.send(
+                    str(translated_text), username=Name, avatar_url=Avatar)
+
+            if len(attachments) !=0:
+                for attachment in attachments:
+                    await webhook.send(
+                        attachment.url, username=Name, avatar_url=Avatar)
+            webhooks = await target_channel_JP.webhooks()
+            for webhook in webhooks:
+                await webhook.delete()
+            
+        else:
+            return
+ 
+ 
+        # webhook = await target_channel.create_webhook(name=Name)
+        # if text != "":
+        #     await webhook.send(
+        #         str(translated_text), username=Name, avatar_url=Avatar)
+
+        # if len(attachments) !=0:
+        #     for attachment in attachments:
+        #         await webhook.send(
+        #             attachment.url, username=Name, avatar_url=Avatar)
+        # webhooks = await target_channel.webhooks()
+        # for webhook in webhooks:
+        #     await webhook.delete()
+        # webhooks = await target_channel_EN.webhooks()
+        # for webhook in webhooks:
+        #     await webhook.delete()
+        # webhooks = await target_channel.webhooks()
+        # for webhook in webhooks:
+        #     await webhook.delete()
+
+
 
 
     # @commands.command()
